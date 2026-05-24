@@ -1,1 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Verbes Fréquents (A-Z)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+        }
 
+        .barre-outils {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-generer {
+            background-color: #2f54eb;
+            color: white;
+            box-shadow: 0 2px 8px rgba(47, 84, 235, 0.2);
+        }
+
+        .btn-generer:hover { background-color: #1d39c4; }
+
+        .btn-traduction {
+            background-color: #f5f5f5;
+            color: #595959;
+            border: 1px solid #d9d9d9;
+        }
+
+        .btn-traduction:hover { background-color: #e8e8e8; }
+        
+        .btn:active { transform: scale(0.98); }
+
+        .conteneur-mots {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .grille-mots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .carte-mot {
+            background-color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+            min-width: 110px;
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        .mot-principal {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f1f1f;
+        }
+
+        .mot-traduit {
+            font-size: 14px;
+            color: #8c8c8c;
+            margin-top: 6px;
+            font-style: italic;
+            display: block;
+        }
+
+        .encart-liens {
+            border: 1px dashed #b7eb8f;
+            background-color: #f6ffed;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            animation: fadeIn 0.5s ease-out forwards;
+            width: 90%;
+        }
+
+        .titre-encart {
+            font-size: 14px;
+            font-weight: 600;
+            color: #389e0d;
+            margin-bottom: 8px;
+        }
+
+        .liens-externes {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+        }
+
+        .liens-externes a {
+            color: #096dd9;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .liens-externes a:hover {
+            text-decoration: underline;
+            color: #1d39c4;
+        }
+
+        .masque {
+            display: none;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="barre-outils">
+        <button class="btn btn-generer" onclick="tirerCinqMots()">🎰 Obtenir 5 verbes fréquents</button>
+        <button class="btn btn-traduction" onclick="basculerTraduction()">🇬🇧 Afficher/Masquer l'anglais</button>
+    </div>
+
+    <div class="conteneur-mots">
+        <div class="grille-mots" id="zoneMots"></div>
+        
+        <div class="encart-liens masque" id="encartAide">
+            <div class="titre-encart">Dictionnaires & Conjugaison :</div>
+            <div class="liens-externes" id="liensVerbes"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseVerbesFrequents = [
+            { fr: "abaisser", en: "to lower / to reduce" },
+            { fr: "abandonner", en: "to abandon / to give up" },
+            { fr: "abattre", en: "to knock down / to shoot" },
+            { fr: "abolir", en: "to abolish" },
+            { fr: "abonner", en: "to subscribe" },
+            { fr: "aborder", en: "to approach / to tackle" },
+            { fr: "aboutir", en: "to lead to / to succeed" },
+            { fr: "abriter", en: "to shelter / to house" },
+            { fr: "absorber", en: "to absorb / to take in" },
+            { fr: "abuser", en: "to abuse / to mislead" },
+            { fr: "abîmer", en: "to damage / to ruin" },
+            { fr: "accabler", en: "to overwhelm / to oppress" },
+            { fr: "accentuer", en: "to emphasize / to stress" },
+            { fr: "accepter", en: "to accept" },
+            { fr: "acclamer", en: "to cheer / to acclaim" },
+            { fr: "accompagner", en: "to accompany / to go with" },
+            { fr: "accomplir", en: "to accomplish / to fulfill" },
+            { fr: "accorder", en: "to grant / to admit / to tune" },
+            { fr: "accoucher", en: "to give birth" },
+            { fr: "accourir", en: "to hurry / to rush" },
+            { fr: "accrocher", en: "to hang up / to hook" },
+            { fr: "accroître", en: "to increase / to grow" },
+            { fr: "accueillir", en: "to welcome / to greet" },
+            { fr: "accumuler", en: "to accumulate / to hoard" },
+            { fr: "accuser", en: "to accuse / to charge" },
+            { fr: "accéder", en: "to access / to attain" },
+            { fr: "accélérer", en: "to accelerate / to speed up" },
+            { fr: "acheter", en: "to buy" },
+            { fr: "achever", en: "to complete / to finish" },
+            { fr: "acquérir", en: "to acquire / to purchase" },
+            { fr: "actionner", en: "to activate / to operate" },
+            { fr: "activer", en: "to activate / to speed up" },
+            { fr: "adapter", en: "to adapt / to adjust" },
+          
