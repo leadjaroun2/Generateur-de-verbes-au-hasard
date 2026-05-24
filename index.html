@@ -100,7 +100,7 @@
             { fr: "rire", en: "to laugh" }, { fr: "sourire", en: "to smile" }, { fr: "chanter", en: "to sing" },
             { fr: "danser", en: "to dance" }, { fr: "jouer", en: "to play" }, { fr: "voyager", en: "to travel" },
             { fr: "oublier", en: "to forget" }, { fr: "rappeler", en: "to remind / to call back" }, { fr: "espérer", en: "to hope" },
-          { fr: "craindre", en: "to fear" }, { fr: "adorer", en: "to adore / to love" }, { fr: "détester", en: "to hate" },
+            { fr: "craindre", en: "to fear" }, { fr: "adorer", en: "to adore / to love" }, { fr: "détester", en: "to hate" },
             { fr: "préférer", en: "to prefer" }, { fr: "avancer", en: "to advance / to move forward" }, { fr: "reculer", en: "to move back" },
             { fr: "tourner", en: "to turn" }, { fr: "traverser", en: "to cross" }, { fr: "conduire", en: "to drive / to lead" },
             { fr: "voler", en: "to fly / to steal" }, { fr: "nager", en: "to swim" }, { fr: "sauter", en: "to jump" },
@@ -117,7 +117,7 @@
             { fr: "juger", en: "to judge" }, { fr: "estimer", en: "to estimate / to value" }, { fr: "comparer", en: "to compare" },
             { fr: "distinguer", en: "to distinguish" }, { fr: "séparer", en: "to separate" }, { fr: "unir", en: "to unite" },
             { fr: "associer", en: "to associate" }, { fr: "conclure", en: "to conclude" }, { fr: "confirmer", en: "to confirm" },
-            { fr: "douter", en: "to doubt" }, { fr: "soupçonner", en: "to suspect" }, { fr: "ignorer", en: "to ignore / to not know" },
+            { fr: "douten", en: "to doubt" }, { fr: "soupçonner", en: "to suspect" }, { fr: "ignorer", en: "to ignore / to not know" },
             { fr: "admettre", en: "to admit" }, { fr: "avouer", en: "to confess / to admit" }, { fr: "nier", en: "to deny" },
             { fr: "prouver", en: "to prove" }, { fr: "justifier", en: "to justify" }, { fr: "défendre", en: "to defend / to forbid" },
             { fr: "attaquer", en: "to attack" }, { fr: "louer", en: "to rent / to praise" }, { fr: "emprunter", en: "to borrow" },
@@ -345,10 +345,10 @@
             zoneLiens.innerHTML = selection.map(item => {
                 let verbeNettoye = encodeURIComponent(item.fr.trim());
                 return `
-                    <div style="margin: 4px 0; text-align: left;">
+                    <div style="margin: 8px 0; text-align: left;">
                         <strong>👉 ${item.fr} :</strong> 
-                        <a href="https://dict.frhelper.com/w/${verbeNettoye}" target="_blank">法语助手</a> | 
-                        <a href="https://conjugaison.bescherelle.com/verbe/${verbeNettoye}" target="_blank">Bescherelle</a>
+                        <a href="https://www.frhelper.com/dict/fr/${verbeNettoye}" target="_blank">法语助手</a> | 
+                        <a href="https://la-conjugaison.nouvelobs.com/du/verbe/${verbeNettoye}.php" target="_blank">Bescherelle</a>
                     </div>
                 `;
             }).join('');
