@@ -1,1 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Verbes Fréquents</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+        }
+        .barre-outils { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { border: none; padding: 12px 24px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .btn-generer { background-color: #2f54eb; color: white; box-shadow: 0 2px 8px rgba(47, 84, 235, 0.2); }
+        .btn-generer:hover { background-color: #1d39c4; }
+        .btn-traduction { background-color: #f5f5f5; color: #595959; border: 1px solid #d9d9d9; }
+        .btn-traduction:hover { background-color: #e8e8e8; }
+        .btn:active { transform: scale(0.98); }
+        .conteneur-mots { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 700px; }
+        .grille-mots { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .carte-mot { background-color: #ffffff; padding: 12px 24px; border-radius: 8px; border: 1px solid #e8e8e8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; min-width: 110px; animation: popIn 0.3s ease-out forwards; }
+        .mot-principal { font-size: 18px; font-weight: 600; color: #1f1f1f; }
+        .mot-traduit { font-size: 14px; color: #8c8c8c; margin-top: 6px; font-style: italic; display: block; }
+        .encart-liens { border: 1px dashed #b7eb8f; background-color: #f6ffed; padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px; animation: fadeIn 0.5s ease-out forwards; width: 90%; }
+        .titre-encart { font-size: 14px; font-weight: 600; color: #389e0d; margin-bottom: 8px; }
+        .liens-externes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; flex-direction: column; }
+        .liens-externes a { color: #096dd9; text-decoration: none; font-size: 14px; font-weight: 500; }
+        .liens-externes a:hover { text-decoration: underline; color: #1d39c4; }
+        .masque { display: none !important; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
 
+    <div class="barre-outils">
+        <button class="btn btn-generer" onclick="tirerCinqMots()">🎰 Obtenir 5 verbes fréquents</button>
+        <button class="btn btn-traduction" onclick="basculerTraduction()">🇬🇧 Afficher/Masquer l'anglais</button>
+    </div>
+
+    <div class="conteneur-mots">
+        <div class="grille-mots" id="zoneMots"></div>
+        <div class="encart-liens masque" id="encartAide">
+            <div class="titre-encart">Dictionnaires & Conjugaison :</div>
+            <div class="liens-externes" id="liensVerbes"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseVerbesFrequents = [
+            { fr: "avoir", en: "to have" }, { fr: "aller", en: "to go" }, { fr: "faire", en: "to do / to make" },
+            { fr: "dire", en: "to say / to tell" }, { fr: "pouvoir", en: "to be able to" }, { fr: "vouloir", en: "to want" },
+            { fr: "voir", en: "to see" }, { fr: "savoir", en: "to know (a fact)" }, { fr: "devoir", en: "to have to / must" },
+            { fr: "venir", en: "to come" }, { fr: "prendre", en: "to take" }, { fr: "arriver", en: "to arrive / to happen" },
+            { fr: "croire", en: "to believe" }, { fr: "mettre", en: "to put" }, { fr: "passer", en: "to pass / to spend time" },
+            { fr: "comprendre", en: "to understand" }, { fr: "connaître", en: "to know (a person/place)" }, { fr: "demander", en: "to ask" },
+            { fr: "tenir", en: "to hold" }, { fr: "aimer", en: "to love / to like" }, { fr: "parler", en: "to speak" },
+            { fr: "trouver", en: "to find" }, { fr: "donner", en: "to give" }, { fr: "appeler", en: "to call" },
+            { fr: "penser", en: "to think" }, { fr: "suivre", en: "to follow" }, { fr: "laisser", en: "to leave / to let" },
+            { fr: "ouvrir", en: "to open" }, { fr: "commencer", en: "to begin / to start" }, { fr: "courir", en: "to run" },
+            { fr: "marcher", en: "to walk / to function" }, { fr: "attendre", en: "to wait for" }, { fr: "sortir", en: "to go out" },
+            { fr: "entrer", en: "to enter" }, { fr: "revenir", en: "to come back" }, { fr: "partir", en: "to leave / to depart" },
+            { fr: "tomber", en: "to fall" }, { fr: "perdre", en: "to lose" }, { fr: "gagner", en: "to win / to earn" },
+            { fr: "monter", en: "to go up / to climb" }, { fr: "descendre", en: "to go down" }, { fr: "arrêter", en: "to stop / to arrest" },
+            { fr: "acheter", en: "to buy" }, { fr: "vendre", en: "to sell" }, { fr: "payer", en: "to pay" },
+            { fr: "apporter", en: "to bring" }, { fr: "amener", en: "to bring (someone)" }, { fr: "emporter", en: "to take away" },
+            { fr: "emmener", en: "to take (someone) along" }, { fr: "chercher", en: "to look for / to search" }, { fr: "cacher", en: "to hide" },
+            { fr: "montrer", en: "to show" }, { fr: "ajouter", en: "to add" }, { fr: "couper", en: "to cut" },
+            { fr: "casser", en: "to break" }, { fr: "fermer", en: "to close" }, { fr: "changer", en: "to change" },
+            { fr: "choisir", en: "to choose" }, { fr: "répondre", en: "to answer / to reply" }, { fr: "entendre", en: "to hear" },
+            { fr: "écouter", en: "to listen" }, { fr: "regarder", en: "to look at / to watch" }, { fr: "écrire", en: "to write" },
+            { fr: "lire", en: "to read" }, { fr: "apprendre", en: "to learn / to teach" }, { fr: "expliquer", en: "to explain" },
+            { fr: "raconter", en: "to tell (a story)" }, { fr: "répéter", en: "to repeat" }, { fr: "discuter", en: "to discuss / to chat" },
+            { fr: "bavarder", en: "to chat" }, { fr: "promettre", en: "to promise" }, { fr: "proposer", en: "to propose / to suggest" },
+            { fr: "offrir", en: "to offer" }, { fr: "inviter", en: "to invite" }, { fr: "aider", en: "to help" },
+            { fr: "partager", en: "to share" }, { fr: "rencontrer", en: "to meet" }, { fr: "visiter", en: "to visit (a place)" },
+            { fr: "accueillir", en: "to welcome" }, { fr: "accompagner", en: "to accompany" }, { fr: "conseiller", en: "to advise" },
+            { fr: "remercier", en: "to thank" }, { fr: "féliciter", en: "to congratulate" }, { fr: "pardonner", en: "to forgive" },
+            { fr: "saluer", en: "to greet" }, { fr: "quitter", en: "to leave" }, { fr: "refuser", en: "to refuse" },
+            { fr: "travailler", en: "to work" }, { fr: "étudier", en: "to study" }, { fr: "réfléchir", en: "to think / to reflect" },
+            { fr: "essayer", en: "to try" }, { fr: "décider", en: "to decide" }, { fr: "organiser", en: "to organize" },
+            { fr: "préparer", en: "to prepare" }, { fr: "créer", en: "to create" }, { fr: "produire", en: "to produce" },
+            { fr: "développer", en: "to develop" }, { fr: "continuer", en: "to continue" }, { fr: "finir", en: "to finish" },
+            { fr: "terminer", en: "to end / to finish" }, { fr: "réussir", en: "to succeed" }, { fr: "échouer", en: "to fail" },
+            { fr: "accepter", en: "to accept" }, { fr: "analyser", en: "to analyze" }, { fr: "calculer", en: "to calculate" },
+            { fr: "vérifier", en: "to check / to verify" }, { fr: "corriger", en: "to correct" }, { fr: "contrôler", en: "to control / to inspect" },
+            { fr: "diriger", en: "to direct / to lead" }, { fr: "gérer", en: "to manage" }, { fr: "commander", en: "to order / to command" },
+            { fr: "signer", en: "to sign" }, { fr: "envoyer", en: "to send" }, { fr: "recevoir", en: "to receive" },
+            { fr: "compter", en: "to count / to intend" }, { fr: "habiter", en: "to live / to reside" }, { fr: "vivre", en: "to live" },
+            { fr: "manger", en: "to eat" }, { fr: "boire", en: "to drink" }, { fr: "dormir", en: "to sleep" },
+            { fr: "coucher", en: "to sleep / to put to bed" }, { fr: "réveiller", en: "to wake up" }, { fr: "laver", en: "to wash" },
+            { fr: "nettoyer", en: "to clean" }, { fr: "cuisiner", en: "to cook" }, { fr: "cuire", en: "to cook / to bake" },
+            { fr: "habiller", en: "to dress" }, { fr: "porter", en: "to wear / to carry" }, { fr: "pleurer", en: "to cry" },
+            { fr: "rire", en: "to laugh" }, { fr: "sourire", en: "to smile" }, { fr: "chanter", en: "to sing" },
+            { fr: "danser", en: "to dance" }, { fr: "jouer", en: "to play" }, { fr: "voyager", en: "to travel" },
+            { fr: "oublier", en: "to forget" }, { fr: "rappeler", en: "to remind / to call back" }, { fr: "espérer", en: "to hope" },
+          { fr: "craindre", en: "to fear" }, { fr: "adorer", en: "to adore / to love" }, { fr: "détester", en: "to hate" },
+            { fr: "préférer", en: "to prefer" }, { fr: "avancer", en: "to advance / to move forward" }, { fr: "reculer", en: "to move back" },
+            { fr: "tourner", en: "to turn" }, { fr: "traverser", en: "to cross" }, { fr: "conduire", en: "to drive / to lead" },
+            { fr: "voler", en: "to fly / to steal" }, { fr: "nager", en: "to swim" }, { fr: "sauter", en: "to jump" },
+            { fr: "glisser", en: "to slide" }, { fr: "pousser", en: "to push" }, { fr: "tirer", en: "to pull / to shoot" },
+            { fr: "lever", en: "to raise / to lift" }, { fr: "baisser", en: "to lower" }, { fr: "jeter", en: "to throw" },
+            { fr: "attraper", en: "to catch" }, { fr: "frapper", en: "to hit / to knock" }, { fr: "toucher", en: "to touch" },
+            { fr: "serrer", en: "to tighten / to shake hands" }, { fr: "bouger", en: "to move" }, { fr: "approcher", en: "to approach" },
+            { fr: "éloigner", en: "to move away" }, { fr: "atteindre", en: "to reach / to attain" }, { fr: "aboutir", en: "to succeed / to lead to" },
+            { fr: "accourir", en: "to rush over" }, { fr: "accrocher", en: "to hang" }, { fr: "fuir", en: "to flee" },
+            { fr: "échapper", en: "to escape" }, { fr: "apercevoir", en: "to perceive / to notice" }, { fr: "reconnaître", en: "to recognize" },
+            { fr: "remarquer", en: "to notice" }, { fr: "observer", en: "to observe" }, { fr: "découvrir", en: "to discover" },
+            { fr: "deviner", en: "to guess" }, { fr: "supposer", en: "to suppose" }, { fr: "imaginer", en: "to imagine" },
+            { fr: "inventer", en: "to invent" }, { fr: "prévoir", en: "to foresee / to predict" }, { fr: "anticiper", en: "to anticipate" },
+            { fr: "juger", en: "to judge" }, { fr: "estimer", en: "to estimate / to value" }, { fr: "comparer", en: "to compare" },
+            { fr: "distinguer", en: "to distinguish" }, { fr: "séparer", en: "to separate" }, { fr: "unir", en: "to unite" },
+            { fr: "associer", en: "to associate" }, { fr: "conclure", en: "to conclude" }, { fr: "confirmer", en: "to confirm" },
+            { fr: "douter", en: "to doubt" }, { fr: "soupçonner", en: "to suspect" }, { fr: "ignorer", en: "to ignore / to not know" },
+            { fr: "admettre", en: "to admit" }, { fr: "avouer", en: "to confess / to admit" }, { fr: "nier", en: "to deny" },
+            { fr: "prouver", en: "to prove" }, { fr: "justifier", en: "to justify" }, { fr: "défendre", en: "to defend / to forbid" },
+            { fr: "attaquer", en: "to attack" }, { fr: "louer", en: "to rent / to praise" }, { fr: "emprunter", en: "to borrow" },
+            { fr: "prêter", en: "to lend" }, { fr: "échanger", en: "to exchange" }, { fr: "négocier", en: "to negotiate" },
+            { fr: "collaborer", en: "to collaborate" }, { fr: "participer", en: "to participate" }, { fr: "assister", en: "to assist / to attend" },
+            { fr: "servir", en: "to serve" }, { fr: "employer", en: "to employ / to use" }, { fr: "utiliser", en: "to use" },
+            { fr: "appliquer", en: "to apply" }, { fr: "exercer", en: "to exercise / to practice" }, { fr: "démissionner", en: "to resign" },
+            { fr: "engager", en: "to hire / to engage" }, { fr: "licencier", en: "to fire / to lay off" }, { fr: "recruter", en: "to recruit" },
+            { fr: "former", en: "to train / to form" }, { fr: "instruire", en: "to instruct" }, { fr: "guider", en: "to guide" },
+            { fr: "recommander", en: "to recommend" }, { fr: "avertir", en: "to warn / to inform" }, { fr: "informer", en: "to inform" },
+            { fr: "annoncer", en: "to announce" }, { fr: "publier", en: "to publish" }, { fr: "augmenter", en: "to increase" },
+            { fr: "diminuer", en: "to decrease" }, { fr: "grandir", en: "to grow" }, { fr: "grossir", en: "to gain weight" },
+            { fr: "maigrir", en: "to lose weight" }, { fr: "améliorer", en: "to improve" }, { fr: "aggraver", en: "to worsen" },
+            { fr: "remplacer", en: "to replace" }, { fr: "évoluer", en: "to evolve" }, { fr: "progresser", en: "to progress" },
+            { fr: "protéger", en: "to protect" }, { fr: "sauver", en: "to save" }, { fr: "abriter", en: "to shelter" },
+            { fr: "assurer", en: "to ensure" }, { fr: "garantir", en: "to guarantee" }, { fr: "sécuriser", en: "to secure" },
+            { fr: "risquer", en: "to risk" }, { fr: "menacer", en: "to threaten" }, { fr: "combattre", en: "to fight" },
+            { fr: "résister", en: "to resist" }, { fr: "céder", en: "to yield / to give up" }, { fr: "abandonner", en: "to abandon" },
+            { fr: "renoncer", en: "to give up" }, { fr: "subir", en: "to undergo / to suffer" }, { fr: "souffrir", en: "to suffer" },
+            { fr: "brûler", en: "to burn" }, { fr: "allumer", en: "to light / to turn on" }, { fr: "éteindre", en: "to turn off" },
+            { fr: "chauffer", en: "to heat" }, { fr: "refroidir", en: "to cool down" }, { fr: "geler", en: "to freeze" },
+            { fr: "fondre", en: "to melt" }, { fr: "couler", en: "to flow / to sink" }, { fr: "sécher", en: "to dry" },
+            { fr: "mouiller", en: "to wet" }, { fr: "arroser", en: "to water" }, { fr: "planter", en: "to plant" },
+            { fr: "cultiver", en: "to cultivate" }, { fr: "creuser", en: "to dig" }, { fr: "remplir", en: "to fill" },
+            { fr: "vider", en: "to empty" }, { fr: "salir", en: "to dirty" }, { fr: "essuyer", en: "to wipe" },
+            { fr: "brosser", en: "to brush" }, { fr: "peindre", en: "to paint" }, { fr: "construire", en: "to build" },
+            { fr: "bâtir", en: "to build" }, { fr: "détruire", en: "to destroy" }, { fr: "abattre", en: "to knock down" },
+            { fr: "réparer", en: "to repair" }, { fr: "bricoler", en: "to do DIY" }, { fr: "coudre", en: "to sew" },
+            { fr: "tricoter", en: "to knit" }, { fr: "permettre", en: "to allow" }, { fr: "interdire", en: "to forbid" },
+            { fr: "autoriser", en: "to authorize" }, { fr: "empêcher", en: "to prevent" }, { fr: "obliger", en: "to force" },
+            { fr: "forcer", en: "to force" }, { fr: "exclure", en: "to exclude" }, { fr: "inclure", en: "to include" },
+            { fr: "convenir", en: "to suit" }, { fr: "approuver", en: "to approve" }, { fr: "condamner", en: "to condemn" },
+            { fr: "blâmer", en: "to blame" }, { fr: "accuser", en: "to accuse" }, { fr: "punir", en: "to punish" },
+            { fr: "récompenser", en: "to reward" }, { fr: "critiquer", en: "to criticize" }, { fr: "respecter", en: "to respect" },
+            { fr: "obéir", en: "to obey" }, { fr: "exiger", en: "to demand" }, { fr: "réclamer", en: "to claim" },
+            { fr: "protester", en: "to protest" }, { fr: "plaindre", en: "to pity" }, { fr: "supporter", en: "to bear" },
+            { fr: "crier", en: "to shout" }, { fr: "chuchoter", en: "to whisper" }, { fr: "siffler", en: "to whistle" },
+            { fr: "sonner", en: "to ring" }, { fr: "sentir", en: "to smell / to feel" }, { fr: "goûter", en: "to taste" },
+            { fr: "savourer", en: "to savor" }, { fr: "respirer", en: "to breathe" }, { fr: "souffler", en: "to blow" },
+            { fr: "tousser", en: "to cough" }, { fr: "éternuer", en: "to sneeze" }, { fr: "saigner", en: "to bleed" },
+            { fr: "guérir", en: "to heal" }, { fr: "fatiguer", en: "to tire" }, { fr: "reposer", en: "to rest" },
+            { fr: "relaxer", en: "to relax" }, { fr: "amuser", en: "to entertain" }, { fr: "ennuyer", en: "to bore" },
+            { fr: "intéresser", en: "to interest" }, { fr: "surprendre", en: "to surprise" }, { fr: "effrayer", en: "to frighten" },
+            { fr: "inquiéter", en: "to worry" }, { fr: "contenir", en: "to contain" }, { fr: "concerner", en: "to concern" },
+            { fr: "dépendre", en: "to depend" }, { fr: "importer", en: "to matter" }, { fr: "exporter", en: "to export" },
+            { fr: "transporter", en: "to transport" }, { fr: "livrer", en: "to deliver" }, { fr: "charger", en: "to load" },
+            { fr: "décharger", en: "to unload" }, { fr: "stocker", en: "to store" }, { fr: "ranger", en: "to tidy up" },
+            { fr: "installer", en: "to install" }, { fr: "placer", en: "to place" }, { fr: "poser", en: "to put down" },
+            { fr: "suspendre", en: "to hang" }, { fr: "détacher", en: "to detach" }, { fr: "lier", en: "to link" },
+            { fr: "attacher", en: "to attach" }, { fr: "connecter", en: "to connect" }, { fr: "déconnecter", en: "to disconnect" },
+            { fr: "brancher", en: "to plug in" }, { fr: "débrancher", en: "to unplug" }, { fr: "bloquer", en: "to block" },
+            { fr: "débloquer", en: "to unblock" }, { fr: "coincer", en: "to corner" }, { fr: "libérer", en: "to free" },
+            { fr: "conserver", en: "to keep" }, { fr: "garder", en: "to keep" }, { fr: "retrouver", en: "to find again" },
+            { fr: "abolir", en: "to abolish" }, { fr: "abonner", en: "to subscribe" }, { fr: "aborder", en: "to approach" },
+            { fr: "absorber", en: "to absorb" }, { fr: "abuser", en: "to abuse" }, { fr: "abîmer", en: "to damage" },
+            { fr: "accabler", en: "to overwhelm" }, { fr: "accentuer", en: "to accentuate" }, { fr: "acclamer", en: "to cheer" },
+            { fr: "accomplir", en: "to accomplish" }, { fr: "accorder", en: "to grant" }, { fr: "accoucher", en: "to give birth" },
+            { fr: "accroître", en: "to increase" }, { fr: "accumuler", en: "to accumulate" }, { fr: "accéder", en: "to access" },
+            { fr: "accélérer", en: "to accelerate" }, { fr: "achever", en: "to complete" }, { fr: "acquérir", en: "to acquire" },
+            { fr: "activer", en: "to activate" }, { fr: "additionner", en: "to add" }, { fr: "adhérer", en: "to adhere" },
+            { fr: "administrer", en: "to administer" }, { fr: "admirer", en: "to admire" }, { fr: "adopter", en: "to adopt" },
+            { fr: "adoucir", en: "to soften" }, { fr: "adresser", en: "to address" }, { fr: "advenir", en: "to happen" },
+            { fr: "affaiblir", en: "to weaken" }, { fr: "affecter", en: "to affect" }, { fr: "afficher", en: "to display" },
+            { fr: "affirmer", en: "to state" }, { fr: "affliger", en: "to afflict" }, { fr: "affronter", en: "to face" },
+            { fr: "agacer", en: "to annoy" }, { fr: "agiter", en: "to shake" }, { fr: "agrandir", en: "to enlarge" },
+            { fr: "agresser", en: "to attack" }, { fr: "agripper", en: "to grab" }, { fr: "aiguiser", en: "to sharpen" },
+            { fr: "ajuster", en: "to adjust" }, { fr: "alarmer", en: "to alarm" }, { fr: "allier", en: "to ally" },
+            { fr: "allonger", en: "to lengthen" }, { fr: "alléger", en: "to lighten" }, { fr: "aménager", en: "to arrange" },
+            { fr: "annuler", en: "to cancel" }, { fr: "apaiser", en: "to soothe" }, { fr: "aplanir", en: "to smooth out" },
+            { fr: "aplatir", en: "to flatten" }, { fr: "apparaître", en: "to appear" }, { fr: "appartenir", en: "to belong" },
+            { fr: "appauvrir", en: "to impoverish" }, { fr: "applaudir", en: "to applaud" }, { fr: "apposer", en: "to affix" },
+            { fr: "apprivoiser", en: "to tame" }, { fr: "approfondir", en: "to deepen" }, { fr: "approvisionner", en: "to supply" },
+            { fr: "apprécier", en: "to appreciate" }, { fr: "appréhender", en: "to grasp" }, { fr: "appuyer", en: "to press" },
+            { fr: "armer", en: "to arm" }, { fr: "arracher", en: "to pull out" }, { fr: "arranger", en: "to arrange" },
+            { fr: "arrondir", en: "to round off" }, { fr: "articuler", en: "to articulate" }, { fr: "aspirer", en: "to aspire" },
+            { fr: "assaillir", en: "to attack" }, { fr: "assaisonner", en: "to season" }, { fr: "assassiner", en: "to assassinate" },
+            { fr: "assembler", en: "to assemble" }, { fr: "asservir", en: "to enslave" }, { fr: "assigner", en: "to assign" },
+            { fr: "assimiler", en: "to assimilate" }, { fr: "assiéger", en: "to besiege" }, { fr: "assombrir", en: "to darken" },
+            { fr: "assommer", en: "to knock out" }, { fr: "assortir", en: "to match" }, { fr: "assoupir", en: "to make drowsy" },
+            { fr: "assouplir", en: "to soften" }, { fr: "assourdir", en: "to deafen" }, { fr: "assouvir", en: "to satisfy" },
+            { fr: "assumer", en: "to assume" }, { fr: "assécher", en: "to dry out" }, { fr: "astreindre", en: "to compel" },
+            { fr: "attarder", en: "to linger" }, { fr: "atteler", en: "to harness" }, { fr: "attendrir", en: "to soften" },
+            { fr: "atterrir", en: "to land" }, { fr: "attester", en: "to attest" }, { fr: "attirer", en: "to attract" },
+            { fr: "attiser", en: "to stoke" }, { fr: "attribuer", en: "to attribute" }, { fr: "attrister", en: "to sadden" },
+            { fr: "atténuer", en: "to mitigate" }, { fr: "aveugler", en: "to blind" }, { fr: "avilir", en: "to debase" },
+            { fr: "aviser", en: "to inform" }, { fr: "aviver", en: "to intensify" }, { fr: "avoisiner", en: "to border on" },
+            { fr: "avorter", en: "to abort" }, { fr: "axer", en: "to center" }, { fr: "aérer", en: "to ventilate" },
+            { fr: "badiner", en: "to joke" }, { fr: "bafouer", en: "to ridicule" }, { fr: "baigner", en: "to bathe" },
+            { fr: "balader", en: "to stroll" }, { fr: "balancer", en: "to swing" }, { fr: "balayer", en: "to sweep" },
+            { fr: "balbutier", en: "to stammer" }, { fr: "baliser", en: "to mark out" }, { fr: "bannir", en: "to banish" },
+            { fr: "baptiser", en: "to baptize" }, { fr: "barrer", en: "to cross out" }, { fr: "basculer", en: "to switch" },
+            { fr: "baser", en: "to base" }, { fr: "battre", en: "to beat" }, { fr: "baver", en: "to drool" },
+            { fr: "bercer", en: "to rock" }, { fr: "blanchir", en: "to whiten" }, { fr: "blaser", en: "to bore" },
+            { fr: "blasphémer", en: "to blaspheme" }, { fr: "blesser", en: "to injure" }, { fr: "bleuir", en: "to turn blue" },
+            { fr: "blinder", en: "to armor" }, { fr: "blottir", en: "to huddle" }, { fr: "bluffer", en: "to bluff" },
+            { fr: "boiser", en: "to panel" }, { fr: "boiter", en: "to limp" }, { fr: "bombarder", en: "to bombard" },
+            { fr: "bomber", en: "to bulge" }, { fr: "bondir", en: "to leap" }, { fr: "bonifier", en: "to improve" },
+            { fr: "border", en: "to border" }, { fr: "borner", en: "to limit" }, { fr: "bosser", en: "to work" },
+            { fr: "boucher", en: "to block" }, { fr: "boucler", en: "to loop" }, { fr: "bouder", en: "to pout" },
+            { fr: "bouffir", en: "to puff up" }, { fr: "bouillir", en: "to boil" }, { fr: "bouler", en: "to roll" },
+            { fr: "bouleverser", en: "to upset" }, { fr: "boulonner", en: "to bolt" }, { fr: "bourrer", en: "to stuff" },
+            { fr: "bousculer", en: "to shove" }, { fr: "boutonner", en: "to button" }, { fr: "boxer", en: "to box" },
+            { fr: "brader", en: "to sell off" }, { fr: "braquer", en: "to steer" }, { fr: "brasser", en: "to stir" },
+            { fr: "braver", en: "to defy" }, { fr: "brider", en: "to curb" }, { fr: "briguer", en: "to seek" },
+            { fr: "briller", en: "to shine" }, { fr: "brimer", en: "to bully" }, { fr: "briser", en: "to break" },
+            { fr: "broder", en: "to embroider" }, { fr: "bronzer", en: "to tan" }, { fr: "brouiller", en: "to blur" },
+            { fr: "brouter", en: "to graze" }, { fr: "broyer", en: "to grind" }, { fr: "brunir", en: "to brown" },
+            { fr: "bâcler", en: "to botch" }, { fr: "bégayer", en: "to stammer" }, { fr: "bénir", en: "to bless" },
+            { fr: "bénéficier", en: "to benefit" }, { fr: "bêcher", en: "to dig" }, { fr: "bûcher", en: "to study hard" },
+            { fr: "cadencer", en: "to rhythm" }, { fr: "cahoter", en: "to jolt" }, { fr: "caillebotter", en: "to clot" },
+            { fr: "cajoler", en: "to pamper" }, { fr: "calculer", en: "to calculate" }, { fr: "caler", en: "to stall" },
+            { fr: "calfeutrer", en: "to draft-proof" }, { fr: "calquer", en: "to copy" }, { fr: "cambrer", en: "to arch" },
+            { fr: "cambrioler", en: "to burglarize" }, { fr: "camoufler", en: "to camouflage" }, { fr: "camper", en: "to camp" },
+            { fr: "canaliser", en: "to channel" }, { fr: "canarder", en: "to shoot at" }, { fr: "canonner", en: "to shell" },
+            { fr: "cantonner", en: "to confine" }, { fr: "capter", en: "to pick up" }, { fr: "captiver", en: "to captivate" },
+            { fr: "capturer", en: "to capture" }, { fr: "caractériser", en: "to characterize" }, { fr: "carboniser", en: "to char" },
+            { fr: "caresser", en: "to stroke" }, { fr: "caricaturer", en: "to caricature" }, { fr: "carreler", en: "to tile" },
+            { fr: "carrer", en: "to square" }, { fr: "caser", en: "to fit in" }, { fr: "casquer", en: "to shell out" },
+            { fr: "casser", en: "to break" }, { fr: "castrer", en: "to castrate" }, { fr: "cataloguer", en: "to catalog" },
+            { fr: "devaster", en: "to devastate" }, { fr: "causer", en: "to chat" }, { fr: "cautionner", en: "to endorse" },
+            { fr: "cautériser", en: "to cauterize" }, { fr: "caver", en: "to hollow out" }, { fr: "caviarder", en: "to censor" },
+            { fr: "ceindre", en: "to encircle" }, { fr: "ceinturer", en: "to tackle" }, { fr: "censurer", en: "to censor" },
+            { fr: "centraliser", en: "to centralize" }, { fr: "centrer", en: "to center" }, { fr: "cerner", en: "to surround" },
+            { fr: "certifier", en: "to certify" }, { fr: "cesser", en: "to cease" }, { fr: "chagriner", en: "to sadden" },
+            { fr: "chahuter", en: "to heckle" }, { fr: "chamailler", en: "to bicker" }, { fr: "chanceler", en: "to stagger" },
+            { fr: "chanter", en: "to sing" }, { fr: "chantonner", en: "to hum" }, { fr: "charmer", en: "to charm" },
+            { fr: "charpenter", en: "to frame" }, { fr: "charrier", en: "to tease" }, { fr: "chasser", en: "to chase" },
+            { fr: "chatouiller", en: "to tickle" }, { fr: "chauffer", en: "to heat" }, { fr: "chausser", en: "to put on shoes" },
+            { fr: "chavirer", en: "to capsize" }, { fr: "chercher", en: "to look for" }, { fr: "chevaucher", en: "to ride" },
+            { fr: "cheviller", en: "to peg" }, { fr: "chevroter", en: "to quaver" }, { fr: "chicaner", en: "to quibble" },
+            { fr: "chiffonner", en: "to crumple" }, { fr: "chiffrer", en: "to quantify" }, { fr: "chiper", en: "to swipe" },
+            { fr: "chipoter", en: "to nitpick" }, { fr: "chuchoter", en: "to whisper" }, { fr: "chuter", en: "to fall" },
+            { fr: "châtier", en: "to chastise" }, { fr: "chérir", en: "to cherish" }, { fr: "cibler", en: "to target" },
+            { fr: "cicatriser", en: "to heal" }, { fr: "ciller", en: "to blink" }, { fr: "cimenter", en: "to cement" },
+            { fr: "circoncire", en: "to circumcise" }, { fr: "circonscrire", en: "to circumscribe" }, { fr: "circuler", en: "to circulate" },
+            { fr: "cirer", en: "to polish" }, { fr: "cisailler", en: "to shear" }, { fr: "ciseler", en: "to chisel" },
+            { fr: "citer", en: "to quote" }, { fr: "civiliser", en: "to civilize" }, { fr: "clamer", en: "to proclaim" },
+            { fr: "claquer", en: "to slam" }, { fr: "clarifier", en: "to clarify" }, { fr: "classer", en: "to file" },
+            { fr: "classifier", en: "to classify" }, { fr: "cligner", en: "to blink" }, { fr: "clignoter", en: "to flash" },
+            { fr: "climatiser", en: "to air-condition" }, { fr: "cliver", en: "to divide" }, { fr: "clocher", en: "to be wrong" },
+            { fr: "clouer", en: "to nail" }, { fr: "clôturer", en: "to close" }, { fr: "coaguler", en: "to coagulate" },
+            { fr: "coaliser", en: "to ally" }, { fr: "cocher", en: "to check off" }, { fr: "coder", en: "to code" },
+            { fr: "codifier", en: "to codify" }, { fr: "coexister", en: "to coexist" }, { fr: "coffrer", en: "to lock up" },
+            { fr: "coincier", en: "to corner" }, { fr: "collaborer", en: "to collaborate" }, { fr: "collectionner", en: "to collect" },
+            { fr: "coller", en: "to stick" }, { fr: "colmater", en: "to seal" }, { fr: "coloniser", en: "to colonize" },
+            { fr: "colorer", en: "to color" }, { fr: "colorier", en: "to color in" }, { fr: "colporter", en: "to peddle" },
+            { fr: "combattre", en: "to fight" }, { fr: "combiner", en: "to combine" }, { fr: "combler", en: "to fulfill" },
+            { fr: "commander", en: "to order" }, { fr: "commenter", en: "to comment on" }, { fr: "commercer", en: "to trade" },
+            { fr: "commercialiser", en: "to market" }, { fr: "commettre", en: "to commit" }, { fr: "communiquer", en: "to communicate" },
+            { fr: "commémorer", en: "to commemorate" }, { fr: "comparaître", en: "to appear in court" }, { fr: "comparer", en: "to compare" },
+            { fr: "compatir", en: "to sympathize" }, { fr: "compenser", en: "to compensate" }, { fr: "compiler", en: "to compile" },
+            { fr: "complaindre", en: "to pity" }, { fr: "complaire", en: "to please" }, { fr: "complexifier", en: "to complicate" },
+            { fr: "complimenter", en: "to compliment" }, { fr: "comploter", en: "to plot" }, { fr: "compléter", en: "to complete" },
+            { fr: "comporter", en: "to behave" }, { fr: "composer", en: "to compose" }, { fr: "comprimer", en: "to compress" },
+            { fr: "compromettre", en: "to compromise" }, { fr: "comptabiliser", en: "to account for" }, { fr: "concentrer", en: "to concentrate" },
+            { fr: "concerner", en: "to concern" }, { fr: "conclure", en: "to conclude" }, { fr: "concocter", en: "to concoct" },
+            { fr: "concorder", en: "to agree" }, { fr: "concourir", en: "to compete" }, { fr: "concrétiser", en: "to materialize" },
+            { fr: "concurrencer", en: "to compete with" }, { fr: "concéder", en: "to concede" }, { fr: "condamner", en: "to condemn" },
+            { fr: "condenser", en: "to condense" }, { fr: "condescendre", en: "to condescend" }, { fr: "conditionner", en: "to condition" },
+            { fr: "confectionner", en: "to make" }, { fr: "confesser", en: "to confess" }, { fr: "confier", en: "to entrust" },
+            { fr: "configurer", en: "to configure" }, { fr: "confirmer", en: "to confirm" }, { fr: "confisquer", en: "to confiscate" },
+            { fr: "confondre", en: "to confuse" }, { fr: "conformer", en: "to conform" }, { fr: "conforter", en: "to reinforce" },
+            { fr: "confronter", en: "to confront" }, { fr: "congeler", en: "to freeze" }, { fr: "congestionner", en: "to congest" },
+            { fr: "congratuler", en: "to congratulate" }, { fr: "congédier", en: "to dismiss" }, { fr: "conjecturer", en: "to conjecture" },
+            { fr: "conjuguer", en: "to conjugate" }, { fr: "conjurer", en: "to ward off" }, { fr: "connecter", en: "to connect" },
+            { fr: "connoter", en: "to connote" }, { fr: "conquérir", en: "to conquer" }, { fr: "consacrer", en: "to devote" },
+            { fr: "conseiller", en: "to advise" }, { fr: "consentir", en: "to consent" }, { fr: "conserver", en: "to keep" },
+            { fr: "considérer", en: "to consider" }, { fr: "consigner", en: "to record" }, { fr: "consister", en: "to consist" },
+            { fr: "consoler", en: "to console" }, { fr: "consolider", en: "to consolidate" }, { fr: "consommer", en: "to consume" },
+            { fr: "conspirer", en: "to conspire" }, { fr: "constater", en: "to observe" }, { fr: "consterner", en: "to dismay" },
+            { fr: "constituer", en: "to constitute" }, { fr: "construire", en: "to build" }, { fr: "consulter", en: "to consult" },
+            { fr: "consumer", en: "to burn away" }, { fr: "contacter", en: "to contact" }, { fr: "contaminer", en: "to contaminate" },
+            { fr: "contempler", en: "to contemplate" }, { fr: "contenir", en: "to contain" }, { fr: "contenter", en: "to satisfy" },
+            { fr: "conter", en: "to tell" }, { fr: "contester", en: "to contest" }, { fr: "contourner", en: "to bypass" },
+            { fr: "contracter", en: "to contract" }, { fr: "contrarier", en: "to upset" }, { fr: "contraster", en: "to contrast" },
+            { fr: "contredire", en: "to contradict" }, { fr: "contrefaire", en: "to counterfeit" }, { fr: "contrevenir", en: "to contravene" },
+            { fr: "contribuer", en: "to contribute" }, { fr: "convaincre", en: "to convince" }, { fr: "converger", en: "to converge" },
+            { fr: "converser", en: "to converse" }, { fr: "convertir", en: "to convert" }, { fr: "convier", en: "to invite" },
+            { fr: "convoiter", en: "to covet" }, { fr: "convoquer", en: "to summon" }, { fr: "coopérer", en: "to cooperate" },
+            { fr: "coordonner", en: "to coordinate" }, { fr: "copier", en: "to copy" }, { fr: "coproduire", en: "to co-produce" },
+            { fr: "corner", en: "to blow a horn" }, { fr: "correspondre", en: "to correspond" }, { fr: "corroborer", en: "to corroborate" },
+            { fr: "corroder", en: "to corrode" }, { fr: "corrompre", en: "to corrupt" }, { fr: "corser", en: "to complicate" },
+            { fr: "cosigner", en: "to co-sign" }, { fr: "costumer", en: "to dress up" }, { fr: "cotiser", en: "to contribute" },
+            { fr: "coucher", en: "to put to bed" }, { fr: "couder", en: "to bend" }, { fr: "coudre", en: "to sew" },
+            { fr: "couler", en: "to flow" }, { fr: "couper", en: "to cut" }, { fr: "courber", en: "to bend" },
+            { fr: "courir", en: "to run" }, { fr: "couronner", en: "to crown" }, { fr: "courroucer", en: "to anger" },
+            { fr: "courtiser", en: "to court" }, { fr: "couver", en: "to hatch" }, { fr: "couvrir", en: "to cover" },
+            { fr: "coïncider", en: "to coincide" }, { fr: "coûter", en: "to cost" }, { fr: "cracher", en: "to spit" },
+            { fr: "craindre", en: "to fear" }, { fr: "cramer", en: "to burn" }, { fr: "cramponner", en: "to cling" },
+            { fr: "craquer", en: "to crack" }, { fr: "crever", en: "to burst" }, { fr: "cribler", en: "to riddle" },
+            { fr: "crier", en: "to shout" }, { fr: "crisper", en: "to tense" }, { fr: "crisser", en: "to screech" },
+            { fr: "critiquer", en: "to criticize" }, { fr: "croire", en: "to believe" }, { fr: "croiser", en: "to cross" },
+            { fr: "croquer", en: "to crunch" }, { fr: "crouler", en: "to crumble" }, { fr: "croupir", en: "to stagnate" },
+            { fr: "croître", en: "to grow" }, { fr: "crucifier", en: "to crucify" }, { fr: "crypter", en: "to encrypt" },
+            { fr: "créditer", en: "to credit" }, { fr: "créer", en: "to create" }, { fr: "crépir", en: "to plaster" },
+            { fr: "crépiter", en: "to crackle" }, { fr: "cuire", en: "to cook" }, { fr: "cuisiner", en: "to cook" },
+            { fr: "culbuter", en: "to tumble" }, { fr: "culminer", en: "to culminate" }, { fr: "culpabiliser", en: "to make feel guilty" },
+            { fr: "cultiver", en: "to cultivate" }, { fr: "cumuler", en: "to combine" }, { fr: "curer", en: "to clean out" },
+            { fr: "cuver", en: "to ferment" }, { fr: "céder", en: "to yield" }, { fr: "côtoyer", en: "to rub shoulders with" },
+            { fr: "daigner", en: "to deign" }, { fr: "damer", en: "to ram" }, { fr: "damner", en: "to damn" },
+            { fr: "danser", en: "to dance" }, { fr: "darder", en: "to dart" }, { fr: "dater", en: "to date" }
+        ];
+
+        let afficherAnglais = true;
+
+        function tirerCinqMots() {
+            let stockDisponible = [...baseVerbesFrequents];
+            let selection = [];
+            let nombreAExtraire = Math.min(5, stockDisponible.length);
+            for (let i = 0; i < nombreAExtraire; i++) {
+                let indexAleatoire = Math.floor(Math.random() * stockDisponible.length);
+                selection.push(stockDisponible[indexAleatoire]);
+                stockDisponible.splice(indexAleatoire, 1);
+            }
+
+            const zoneMots = document.getElementById("zoneMots");
+            zoneMots.innerHTML = selection.map(item => `
+                <div class="carte-mot">
+                    <div class="mot-principal">${item.fr}</div>
+                    <div class="mot-traduit ${afficherAnglais ? '' : 'masque'}">${item.en}</div>
+                </div>
+            `).join('');
+
+            const zoneLiens = document.getElementById("liensVerbes");
+            zoneLiens.innerHTML = selection.map(item => {
+                let verbeNettoye = encodeURIComponent(item.fr.trim());
+                return `
+                    <div style="margin: 4px 0; text-align: left;">
+                        <strong>👉 ${item.fr} :</strong> 
+                        <a href="https://dict.frhelper.com/w/${verbeNettoye}" target="_blank">法语助手</a> | 
+                        <a href="https://conjugaison.bescherelle.com/verbe/${verbeNettoye}" target="_blank">Bescherelle</a>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById("encartAide").classList.remove("masque");
+        }
+
+        function basculerTraduction() {
+            afficherAnglais = !afficherAnglais;
+            const traductions = document.querySelectorAll('.mot-traduit');
+            traductions.forEach(el => {
+                if (afficherAnglais) { el.classList.remove('masque'); } 
+                else { el.classList.add('masque'); }
+            });
+        }
+    </script>
+</body>
+</html>
