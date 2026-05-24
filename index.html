@@ -317,14 +317,17 @@
                 </div>
             `).join('');
 
-            // Affichage des liens
-            document.getElementById("liensVerbes").innerHTML = selection.map(item => `
-                <div style="margin: 5px 0;">
-                    <strong>${item.fr} :</strong> 
-                    <a href="https://www.frhelper.com/dict/fr/${encodeURIComponent(item.fr)}" target="_blank">法语助手</a>
-                    <a href="https://la-conjugaison.nouvelobs.com/du/verbe/${item.fr}.php" target="_blank">Bescherelle</a>
-                </div>
-            `).join('');
+           // Affichage des liens
+document.getElementById("liensVerbes").innerHTML = selection.map(item => {
+    let v = encodeURIComponent(item.fr.trim()); 
+    return `
+        <div style="margin: 8px 0; text-align: left;">
+            <strong>👉 ${item.fr} :</strong> 
+            <a href="https://fr.wiktionnaire.org/wiki/${v}#Conjugaison" target="_blank">维基词典 (Wiktionnaire)</a> | 
+            <a href="https://la-conjugaison.nouvelobs.com/du/verbe/${v}.php" target="_blank">Bescherelle</a>
+        </div>
+    `;
+}).join('');
 
             document.getElementById("encartAide").classList.remove("masque");
         }
