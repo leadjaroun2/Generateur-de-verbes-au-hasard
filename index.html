@@ -5,51 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Générateur de Verbes Fréquents</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: transparent;
-        }
+        body { font-family: -apple-system, sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .barre-outils { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { border: none; padding: 12px 24px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .btn-generer { background-color: #2f54eb; color: white; box-shadow: 0 2px 8px rgba(47, 84, 235, 0.2); }
-        .btn-generer:hover { background-color: #1d39c4; }
+        .btn { border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; }
+        .btn-generer { background-color: #2f54eb; color: white; }
         .btn-traduction { background-color: #f5f5f5; color: #595959; border: 1px solid #d9d9d9; }
-        .btn-traduction:hover { background-color: #e8e8e8; }
-        .btn:active { transform: scale(0.98); }
-        .conteneur-mots { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 700px; }
-        .grille-mots { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-        .carte-mot { background-color: #ffffff; padding: 12px 24px; border-radius: 8px; border: 1px solid #e8e8e8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; min-width: 110px; animation: popIn 0.3s ease-out forwards; }
-        .mot-principal { font-size: 18px; font-weight: 600; color: #1f1f1f; }
-        .mot-traduit { font-size: 14px; color: #8c8c8c; margin-top: 6px; font-style: italic; display: block; }
-        .encart-liens { border: 1px dashed #b7eb8f; background-color: #f6ffed; padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px; animation: fadeIn 0.5s ease-out forwards; width: 90%; }
-        .titre-encart { font-size: 14px; font-weight: 600; color: #389e0d; margin-bottom: 8px; }
-        .liens-externes { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; flex-direction: column; }
-        .liens-externes a { color: #096dd9; text-decoration: none; font-size: 14px; font-weight: 500; }
-        .liens-externes a:hover { text-decoration: underline; color: #1d39c4; }
+        .grille-mots { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 20px; }
+        .carte-mot { background-color: #ffffff; padding: 12px 24px; border-radius: 8px; border: 1px solid #e8e8e8; text-align: center; }
+        .mot-principal { font-size: 18px; font-weight: 600; }
+        .mot-traduit { font-size: 14px; color: #8c8c8c; font-style: italic; display: block; }
+        .encart-liens { border: 1px dashed #b7eb8f; background-color: #f6ffed; padding: 15px; border-radius: 8px; width: 90%; max-width: 500px; }
         .masque { display: none !important; }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="barre-outils">
-        <button class="btn btn-generer" onclick="tirerCinqMots()">🎰 Obtenir 5 verbes fréquents</button>
+        <button class="btn btn-generer" onclick="tirerCinqMots()">🎰 Obtenir 5 verbes</button>
         <button class="btn btn-traduction" onclick="basculerTraduction()">🇬🇧 Afficher/Masquer l'anglais</button>
     </div>
 
-    <div class="conteneur-mots">
-        <div class="grille-mots" id="zoneMots"></div>
-        <div class="encart-liens masque" id="encartAide">
-            <div class="titre-encart">Dictionnaires & Conjugaison :</div>
-            <div class="liens-externes" id="liensVerbes"></div>
-        </div>
+    <div class="grille-mots" id="zoneMots"></div>
+    <div class="encart-liens masque" id="encartAide">
+        <strong>Dictionnaires & Conjugaison :</strong>
+        <div id="liensVerbes"></div>
     </div>
 
     <script>
@@ -319,74 +298,41 @@
             { fr: "cuver", en: "to ferment" }, { fr: "céder", en: "to yield" }, { fr: "côtoyer", en: "to rub shoulders with" },
             { fr: "daigner", en: "to deign" }, { fr: "damer", en: "to ram" }, { fr: "damner", en: "to damn" },
             { fr: "danser", en: "to dance" }, { fr: "darder", en: "to dart" }, { fr: "dater", en: "to date" }
-        ];
+       ];
 
         let afficherAnglais = true;
 
-       function tirerCinqMots() {
-    // 1. Tirer 5 mots au hasard
-    let motsTires = [];
-    while(motsTires.length < 5) {
-        let mot = baseVerbesFrequents[Math.floor(Math.random() * baseVerbesFrequents.length)];
-        if(!motsTires.includes(mot)) motsTires.push(mot);
-    }
+        function tirerCinqMots() {
+            let selection = [];
+            while(selection.length < 5) {
+                let mot = baseVerbesFrequents[Math.floor(Math.random() * baseVerbesFrequents.length)];
+                if(!selection.includes(mot)) selection.push(mot);
+            }
 
-    // 2. Afficher les mots
-    const zone = document.getElementById("zoneMots");
-    const zoneLiens = document.getElementById("liensVerbes");
-    zone.innerHTML = "";
-    zoneLiens.innerHTML = ""; // On vide les anciens liens
-
-    motsTires.forEach(mot => {
-        // Création de la carte
-        const carte = document.createElement("div");
-        carte.className = "carte-mot";
-        carte.innerHTML = `<span class="mot-principal">${mot.fr}</span>
-                           <span class="mot-traduit">${mot.en}</span>`;
-        zone.appendChild(carte);
-
-        // Création des liens pour CHAQUE mot
-        const groupeLiens = document.createElement("div");
-        groupeLiens.style.marginBottom = "10px";
-        groupeLiens.innerHTML = `<strong>${mot.fr} : </strong>
-            <a href="https://leconjugueur.lefigaro.fr/conjugaison/verbe/${mot.fr}.html" target="_blank">FR Conjugaison</a> | 
-            <a href="https://www.frdic.com/dicts/fr/conjugaison/${mot.fr}" target="_blank">法語助手 Conjugaison</a>`;
-        zoneLiens.appendChild(groupeLiens);
-    });
-
-    // 3. Afficher l'encart des liens
-    document.getElementById("encartAide").classList.remove("masque");
-}
-
-            const zoneMots = document.getElementById("zoneMots");
-            zoneMots.innerHTML = selection.map(item => `
+            // Affichage des cartes
+            document.getElementById("zoneMots").innerHTML = selection.map(item => `
                 <div class="carte-mot">
                     <div class="mot-principal">${item.fr}</div>
                     <div class="mot-traduit ${afficherAnglais ? '' : 'masque'}">${item.en}</div>
                 </div>
             `).join('');
 
-            const zoneLiens = document.getElementById("liensVerbes");
-            zoneLiens.innerHTML = selection.map(item => {
-                let verbeNettoye = encodeURIComponent(item.fr.trim());
-                return `
-                    <div style="margin: 8px 0; text-align: left;">
-                        <strong>👉 ${item.fr} :</strong> 
-                        <a href="https://www.frhelper.com/dict/fr/${verbeNettoye}" target="_blank">法语助手</a> | 
-                        <a href="https://la-conjugaison.nouvelobs.com/du/verbe/${verbeNettoye}.php" target="_blank">Bescherelle</a>
-                    </div>
-                `;
-            }).join('');
+            // Affichage des liens
+            document.getElementById("liensVerbes").innerHTML = selection.map(item => `
+                <div style="margin: 5px 0;">
+                    <strong>${item.fr} :</strong> 
+                    <a href="https://www.frhelper.com/dict/fr/${item.fr}" target="_blank">法语助手</a> | 
+                    <a href="https://la-conjugaison.nouvelobs.com/du/verbe/${item.fr}.php" target="_blank">Bescherelle</a>
+                </div>
+            `).join('');
 
             document.getElementById("encartAide").classList.remove("masque");
         }
 
         function basculerTraduction() {
             afficherAnglais = !afficherAnglais;
-            const traductions = document.querySelectorAll('.mot-traduit');
-            traductions.forEach(el => {
-                if (afficherAnglais) { el.classList.remove('masque'); } 
-                else { el.classList.add('masque'); }
+            document.querySelectorAll('.mot-traduit').forEach(el => {
+                el.classList.toggle('masque', !afficherAnglais);
             });
         }
     </script>
