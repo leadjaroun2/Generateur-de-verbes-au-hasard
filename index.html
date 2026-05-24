@@ -323,15 +323,40 @@
 
         let afficherAnglais = true;
 
-        function tirerCinqMots() {
-            let stockDisponible = [...baseVerbesFrequents];
-            let selection = [];
-            let nombreAExtraire = Math.min(5, stockDisponible.length);
-            for (let i = 0; i < nombreAExtraire; i++) {
-                let indexAleatoire = Math.floor(Math.random() * stockDisponible.length);
-                selection.push(stockDisponible[indexAleatoire]);
-                stockDisponible.splice(indexAleatoire, 1);
-            }
+       function tirerCinqMots() {
+    // 1. Tirer 5 mots au hasard
+    let motsTires = [];
+    while(motsTires.length < 5) {
+        let mot = baseVerbesFrequents[Math.floor(Math.random() * baseVerbesFrequents.length)];
+        if(!motsTires.includes(mot)) motsTires.push(mot);
+    }
+
+    // 2. Afficher les mots
+    const zone = document.getElementById("zoneMots");
+    const zoneLiens = document.getElementById("liensVerbes");
+    zone.innerHTML = "";
+    zoneLiens.innerHTML = ""; // On vide les anciens liens
+
+    motsTires.forEach(mot => {
+        // Création de la carte
+        const carte = document.createElement("div");
+        carte.className = "carte-mot";
+        carte.innerHTML = `<span class="mot-principal">${mot.fr}</span>
+                           <span class="mot-traduit">${mot.en}</span>`;
+        zone.appendChild(carte);
+
+        // Création des liens pour CHAQUE mot
+        const groupeLiens = document.createElement("div");
+        groupeLiens.style.marginBottom = "10px";
+        groupeLiens.innerHTML = `<strong>${mot.fr} : </strong>
+            <a href="https://leconjugueur.lefigaro.fr/conjugaison/verbe/${mot.fr}.html" target="_blank">FR Conjugaison</a> | 
+            <a href="https://www.frdic.com/dicts/fr/conjugaison/${mot.fr}" target="_blank">法語助手 Conjugaison</a>`;
+        zoneLiens.appendChild(groupeLiens);
+    });
+
+    // 3. Afficher l'encart des liens
+    document.getElementById("encartAide").classList.remove("masque");
+}
 
             const zoneMots = document.getElementById("zoneMots");
             zoneMots.innerHTML = selection.map(item => `
